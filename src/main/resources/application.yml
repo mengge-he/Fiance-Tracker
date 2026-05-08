@@ -13,3 +13,8 @@ spring:
 
 server:
   port: 8080
+
+app:
+  jwt:
+    secret: your_super_long_256_bit_secret_key_change_me_1234567890
+    expiration-ms: 3600000
