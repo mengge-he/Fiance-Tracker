@@ -11,12 +11,12 @@ import com.Mengge.finance_tracker.repository.BudgetRepository;
 import com.Mengge.finance_tracker.repository.CategorySpendSummary;
 import com.Mengge.finance_tracker.repository.TransactionRepository;
 import com.Mengge.finance_tracker.repository.UserRepository;
+import com.Mengge.finance_tracker.util.CategoryKeyUtil;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -116,19 +116,15 @@ public class BudgetService {
         );
         Map<String, BigDecimal> map = new HashMap<>();
         for (CategorySpendSummary row : rows) {
-            String key = normalizeCategoryKey(row.getCategory());
+            String key = CategoryKeyUtil.normalizeKey(row.getCategory());
             map.merge(key, row.getTotal(), BigDecimal::add);
         }
         return map;
     }
 
-    private static String normalizeCategoryKey(String category) {
-        return category.trim().toLowerCase(Locale.ROOT);
-    }
-
     private BudgetItemResponse toItemWithSpend(Budget budget, Map<String, BigDecimal> spendByCategoryKey) {
         BigDecimal spent = spendByCategoryKey.getOrDefault(
-            normalizeCategoryKey(budget.getCategory()),
+            CategoryKeyUtil.normalizeKey(budget.getCategory()),
             BigDecimal.ZERO
         );
         BigDecimal limit = budget.getBudgetLimit();

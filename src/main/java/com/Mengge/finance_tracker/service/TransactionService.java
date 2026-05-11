@@ -1,13 +1,22 @@
 package com.Mengge.finance_tracker.service;
 
+import com.Mengge.finance_tracker.dto.transaction.TransactionQueryResponse;
 import com.Mengge.finance_tracker.dto.transaction.TransactionRequest;
 import com.Mengge.finance_tracker.dto.transaction.TransactionResponse;
 import com.Mengge.finance_tracker.entity.Transaction;
 import com.Mengge.finance_tracker.entity.User;
+import com.Mengge.finance_tracker.enums.TransactionType;
 import com.Mengge.finance_tracker.repository.TransactionRepository;
+import com.Mengge.finance_tracker.repository.TransactionSpecifications;
 import com.Mengge.finance_tracker.repository.UserRepository;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,12 +41,70 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public List<TransactionResponse> list(String userEmail) {
+    public TransactionQueryResponse search(
+        String userEmail,
+        LocalDate fromDate,
+        LocalDate toDate,
+        String category,
+        TransactionType type,
+        Integer page,
+        Integer size,
+        String sort
+    ) {
         User user = requireUser(userEmail);
-        return transactionRepository.findAllByUserIdOrderByDateDescIdDesc(user.getId())
-            .stream()
-            .map(this::toResponse)
-            .toList();
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new IllegalArgumentException("fromDate must not be after toDate");
+        }
+        Specification<Transaction> spec = TransactionSpecifications.ownedByWithFilters(
+            user.getId(),
+            fromDate,
+            toDate,
+            category,
+            type
+        );
+        Sort sortSpec = parseSort(sort);
+        if (page == null) {
+            List<TransactionResponse> items = transactionRepository.findAll(spec, sortSpec).stream()
+                .map(this::toResponse)
+                .toList();
+            return TransactionQueryResponse.unpaged(items);
+        }
+        int pageSize = size != null ? size : 20;
+        if (page < 0 || pageSize < 1) {
+            throw new IllegalArgumentException("Invalid page or size");
+        }
+        Pageable pageable = PageRequest.of(page, pageSize, sortSpec);
+        Page<Transaction> result = transactionRepository.findAll(spec, pageable);
+        return TransactionQueryResponse.paged(
+            result.stream().map(this::toResponse).toList(),
+            result.getNumber(),
+            result.getSize(),
+            result.getTotalElements(),
+            result.getTotalPages()
+        );
+    }
+
+    private static Sort parseSort(String sortParam) {
+        String raw = sortParam != null && !sortParam.isBlank() ? sortParam : "date,desc";
+        String[] parts = raw.split(",", 2);
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("sort must be field,direction (e.g. date,desc)");
+        }
+        String field = validateSortField(parts[0].trim());
+        Sort.Direction direction;
+        try {
+            direction = Sort.Direction.fromString(parts[1].trim());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid sort direction");
+        }
+        return Sort.by(new Sort.Order(direction, field), new Sort.Order(Sort.Direction.DESC, "id"));
+    }
+
+    private static String validateSortField(String field) {
+        return switch (field) {
+            case "date", "amount", "category", "type", "id" -> field;
+            default -> throw new IllegalArgumentException("Unsupported sort field: " + field);
+        };
     }
 
     @Transactional(readOnly = true)

@@ -1,10 +1,12 @@
 package com.Mengge.finance_tracker.controller;
 
+import com.Mengge.finance_tracker.dto.transaction.TransactionQueryResponse;
 import com.Mengge.finance_tracker.dto.transaction.TransactionRequest;
 import com.Mengge.finance_tracker.dto.transaction.TransactionResponse;
+import com.Mengge.finance_tracker.enums.TransactionType;
 import com.Mengge.finance_tracker.service.TransactionService;
 import jakarta.validation.Valid;
-import java.util.List;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,8 +37,26 @@ public class TransactionController {
     }
 
     @GetMapping
-    public List<TransactionResponse> list(Authentication authentication) {
-        return transactionService.list(authentication.getName());
+    public TransactionQueryResponse list(
+        Authentication authentication,
+        @RequestParam(required = false) LocalDate fromDate,
+        @RequestParam(required = false) LocalDate toDate,
+        @RequestParam(required = false) String category,
+        @RequestParam(required = false) TransactionType type,
+        @RequestParam(required = false) Integer page,
+        @RequestParam(required = false) Integer size,
+        @RequestParam(required = false, defaultValue = "date,desc") String sort
+    ) {
+        return transactionService.search(
+            authentication.getName(),
+            fromDate,
+            toDate,
+            category,
+            type,
+            page,
+            size,
+            sort
+        );
     }
 
     @GetMapping("/{id}")
