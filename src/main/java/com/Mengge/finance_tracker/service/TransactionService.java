@@ -6,6 +6,9 @@ import com.Mengge.finance_tracker.dto.transaction.TransactionResponse;
 import com.Mengge.finance_tracker.entity.Transaction;
 import com.Mengge.finance_tracker.entity.User;
 import com.Mengge.finance_tracker.enums.TransactionType;
+import com.Mengge.finance_tracker.exception.ResourceNotFoundException;
+import com.Mengge.finance_tracker.exception.UnauthorizedException;
+import com.Mengge.finance_tracker.util.EmailUtil;
 import com.Mengge.finance_tracker.repository.TransactionRepository;
 import com.Mengge.finance_tracker.repository.TransactionSpecifications;
 import com.Mengge.finance_tracker.repository.UserRepository;
@@ -133,13 +136,14 @@ public class TransactionService {
     }
 
     private User requireUser(String email) {
-        return userRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"));
+        String normalized = EmailUtil.normalize(email);
+        return userRepository.findByEmail(normalized)
+            .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
     }
 
     private Transaction requireOwnedTransaction(Long userId, Long transactionId) {
         return transactionRepository.findByIdAndUserId(transactionId, userId)
-            .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
     }
 
     private TransactionResponse toResponse(Transaction transaction) {

@@ -6,6 +6,7 @@ import com.Mengge.finance_tracker.dto.auth.RegisterRequest;
 import com.Mengge.finance_tracker.entity.User;
 import com.Mengge.finance_tracker.repository.UserRepository;
 import com.Mengge.finance_tracker.security.JwtService;
+import com.Mengge.finance_tracker.util.EmailUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,12 +23,13 @@ public class AuthService {
     private final JwtService jwtService;
 
     public AuthResponse register(RegisterRequest req) {
-        if (userRepository.existsByEmail(req.email())) {
+        String email = EmailUtil.normalize(req.email());
+        if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email already in use");
         }
         User user = new User();
         user.setName(req.name());
-        user.setEmail(req.email().toLowerCase().trim());
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(req.password()));
         userRepository.save(user);
         UserDetails principal = org.springframework.security.core.userdetails.User
@@ -40,10 +42,11 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest req) {
+        String email = EmailUtil.normalize(req.email());
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(req.email(), req.password())
+            new UsernamePasswordAuthenticationToken(email, req.password())
         );
-        User user = userRepository.findByEmail(req.email())
+        User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
         UserDetails principal = org.springframework.security.core.userdetails.User
             .withUsername(user.getEmail())

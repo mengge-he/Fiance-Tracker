@@ -1,6 +1,7 @@
 package com.Mengge.finance_tracker.security;
 
 import com.Mengge.finance_tracker.repository.UserRepository;
+import com.Mengge.finance_tracker.util.EmailUtil;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -16,7 +17,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        var user = userRepository.findByEmail(email)
+        String normalized = EmailUtil.normalize(email);
+        if (normalized == null || normalized.isEmpty()) {
+            throw new UsernameNotFoundException("User not found");
+        }
+        var user = userRepository.findByEmail(normalized)
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return new org.springframework.security.core.userdetails.User(
             user.getEmail(),

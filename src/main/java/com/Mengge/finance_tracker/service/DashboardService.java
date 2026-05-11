@@ -6,6 +6,8 @@ import com.Mengge.finance_tracker.dto.dashboard.OverBudgetCategoryRow;
 import com.Mengge.finance_tracker.entity.Budget;
 import com.Mengge.finance_tracker.entity.User;
 import com.Mengge.finance_tracker.enums.TransactionType;
+import com.Mengge.finance_tracker.exception.UnauthorizedException;
+import com.Mengge.finance_tracker.util.EmailUtil;
 import com.Mengge.finance_tracker.repository.BudgetRepository;
 import com.Mengge.finance_tracker.repository.CategorySpendSummary;
 import com.Mengge.finance_tracker.repository.TransactionRepository;
@@ -95,7 +97,8 @@ public class DashboardService {
     }
 
     private User requireUser(String email) {
-        return userRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"));
+        String normalized = EmailUtil.normalize(email);
+        return userRepository.findByEmail(normalized)
+            .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
     }
 }

@@ -20,7 +20,7 @@ import lombok.Setter;
 @Entity
 @Table(
     name = "budgets",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "year", "month", "category"})
+    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "budget_year", "budget_month", "category"})
 )
 @Getter
 @Setter
@@ -32,10 +32,10 @@ public class Budget {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "budget_year", nullable = false)
     private int year;
 
-    @Column(nullable = false)
+    @Column(name = "budget_month", nullable = false)
     private int month;
 
     @Column(nullable = false)

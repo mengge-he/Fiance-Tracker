@@ -7,6 +7,9 @@ import com.Mengge.finance_tracker.dto.budget.BudgetUpdateRequest;
 import com.Mengge.finance_tracker.entity.Budget;
 import com.Mengge.finance_tracker.entity.User;
 import com.Mengge.finance_tracker.enums.TransactionType;
+import com.Mengge.finance_tracker.exception.ResourceNotFoundException;
+import com.Mengge.finance_tracker.exception.UnauthorizedException;
+import com.Mengge.finance_tracker.util.EmailUtil;
 import com.Mengge.finance_tracker.repository.BudgetRepository;
 import com.Mengge.finance_tracker.repository.CategorySpendSummary;
 import com.Mengge.finance_tracker.repository.TransactionRepository;
@@ -87,6 +90,13 @@ public class BudgetService {
         return new BudgetMonthlyResponse(year, month, items);
     }
 
+    @Transactional
+    public void delete(String userEmail, Long id) {
+        User user = requireUser(userEmail);
+        Budget budget = requireOwnedBudget(user.getId(), id);
+        budgetRepository.delete(budget);
+    }
+
     private void validateYearMonth(int year, int month) {
         try {
             YearMonth.of(year, month);
@@ -96,13 +106,14 @@ public class BudgetService {
     }
 
     private User requireUser(String email) {
-        return userRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"));
+        String normalized = EmailUtil.normalize(email);
+        return userRepository.findByEmail(normalized)
+            .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
     }
 
     private Budget requireOwnedBudget(Long userId, Long budgetId) {
         return budgetRepository.findByIdAndUserId(budgetId, userId)
-            .orElseThrow(() -> new IllegalArgumentException("Budget not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Budget not found"));
     }
 
     private Map<String, BigDecimal> spendByCategoryKey(Long userId, int year, int month) {
