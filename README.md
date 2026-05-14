@@ -60,9 +60,11 @@ Emails are stored and matched in **lowercase**; login accepts any casing that no
 | `SPRING_DATASOURCE_URL` | JDBC URL | `jdbc:postgresql://localhost:5432/finance_tracker` |
 | `SPRING_DATASOURCE_USERNAME` | DB user | `finance_user` |
 | `SPRING_DATASOURCE_PASSWORD` | DB password | `finance_pass` |
+| `DATABASE_URL` | Render/Railway-style Postgres URL; Docker entrypoint converts it to a JDBC URL when `SPRING_DATASOURCE_URL` is not set | unset |
 | `APP_JWT_SECRET` | HS256 signing key (use a long random value in production) | dev placeholder in `application.yml` |
 | `APP_JWT_EXPIRATION_MS` | JWT lifetime | `3600000` |
 | `APP_CORS_ALLOWED_ORIGIN_PATTERNS` | Comma-separated CORS origin patterns (e.g. `https://myapp.com`,`http://localhost:*`) | `http://localhost:*,http://127.0.0.1:*` |
+| `PORT` / `SERVER_PORT` | HTTP port. `PORT` is checked first for PaaS deployment compatibility | `8080` |
 | `SPRING_PROFILES_ACTIVE` | Set to `prod` for production defaults | unset (dev-style logging) |
 
 With **`spring.profiles.active=prod`**, SQL logging and Swagger/OpenAPI are turned off (`application-prod.yml`).
@@ -79,6 +81,72 @@ docker compose up --build
 - Postgres: `localhost:5432` (same credentials as in `docker-compose.yml`)
 
 The `app` service waits for Postgres to become healthy before starting.
+
+## Deployment
+
+This project is ready for a Docker-based deployment on platforms such as Render or Railway.
+
+### Render Blueprint
+
+A `render.yaml` file is included for one-click-style Render deployment. It provisions:
+
+- Docker web service for the Spring Boot API
+- Render PostgreSQL database
+- `/api/health` health check
+- Generated production JWT secret
+- Production profile (`SPRING_PROFILES_ACTIVE=prod`)
+
+After Render creates the service, your live API base URL will be shown in the Render dashboard, for example:
+
+```text
+https://finance-tracker-api.onrender.com
+```
+
+Health check:
+
+```http
+GET https://finance-tracker-api.onrender.com/api/health
+```
+
+For a browser or frontend client, update `APP_CORS_ALLOWED_ORIGIN_PATTERNS` to include the deployed frontend origin.
+
+### Manual Docker/PaaS deploy
+
+If you deploy without `render.yaml`, set these environment variables:
+
+```text
+SPRING_PROFILES_ACTIVE=prod
+DATABASE_URL=postgresql://user:password@host:5432/database
+APP_JWT_SECRET=<long random secret>
+APP_CORS_ALLOWED_ORIGIN_PATTERNS=https://your-frontend.example.com
+```
+
+You may set `SPRING_DATASOURCE_URL` directly instead of `DATABASE_URL` if your host lets you provide a JDBC URL:
+
+```text
+SPRING_DATASOURCE_URL=jdbc:postgresql://host:5432/database
+```
+
+## Feature status
+
+MVP implemented:
+
+- User signup/login with JWT auth
+- Add, edit, delete, list, and filter transactions by date/category/type
+- Monthly budgets per category
+- Dashboard total spent, category breakdown, and over-budget alerts
+- PostgreSQL + JPA/Hibernate
+- JUnit/Mockito unit tests and MockMvc integration tests
+- Docker app + database setup
+- Swagger/OpenAPI docs for local/dev profile
+
+Not implemented yet:
+
+- Scheduled monthly summary email/report
+- CSV import/export
+- Redis caching for dashboard
+- User/admin role support
+- A committed live API URL; add it here after deploying
 
 ## Tests
 

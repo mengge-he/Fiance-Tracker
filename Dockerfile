@@ -13,4 +13,4 @@ COPY --from=builder /build/target/finance-tracker-*.jar app.jar
 USER spring:spring
 EXPOSE 8080
 ENV SPRING_PROFILES_ACTIVE=prod
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["sh", "-c", "if [ -n \"$DATABASE_URL\" ] && [ -z \"$SPRING_DATASOURCE_URL\" ]; then export SPRING_DATASOURCE_URL=\"jdbc:${DATABASE_URL}\"; fi; exec java -jar /app/app.jar"]
