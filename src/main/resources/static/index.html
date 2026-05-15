@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="app-shell">
+        <section class="auth-view" id="authView">
+            <div class="brand-panel">
+                <p class="eyebrow">Finance Tracker</p>
+                <h1>Track every dollar in and out.</h1>
+                <p class="lede">Sign in to manage monthly income, expenses, and net income with your saved finance-tracker API records.</p>
+            </div>
+
+            <div class="auth-card">
+                <div class="auth-tabs" role="tablist" aria-label="Authentication options">
+                    <button class="tab-button active" type="button" id="showSignIn">Sign in</button>
+                    <button class="tab-button" type="button" id="showSignUp">Sign up</button>
+                </div>
+
+                <form class="auth-form active" id="signInForm">
+                    <label>
+                        Email
+                        <input type="email" name="email" autocomplete="email" required>
+                    </label>
+                    <label>
+                        Password
+                        <input type="password" name="password" autocomplete="current-password" required>
+                    </label>
+                    <button class="primary-button" type="submit">Sign in</button>
+                </form>
+
+                <form class="auth-form" id="signUpForm">
+                    <label>
+                        Name
+                        <input type="text" name="name" autocomplete="name" required>
+                    </label>
+                    <label>
+                        Email
+                        <input type="email" name="email" autocomplete="email" required>
+                    </label>
+                    <label>
+                        Password
+                        <input type="password" name="password" autocomplete="new-password" minlength="6" required>
+                    </label>
+                    <button class="primary-button" type="submit">Create account</button>
+                </form>
+
+                <p class="message" id="authMessage" role="status"></p>
+            </div>
+        </section>
+
+        <section class="dashboard-view hidden" id="dashboardView">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">Monthly overview</p>
+                    <h1 id="monthTitle">This month</h1>
+                    <p class="muted" id="userLabel">Signed in</p>
+                </div>
+                <div class="topbar-actions">
+                    <label class="month-picker">
+                        Month
+                        <input type="month" id="monthInput">
+                    </label>
+                    <button class="ghost-button" type="button" id="refreshButton">Refresh</button>
+                    <button class="danger-button" type="button" id="logoutButton">Sign out</button>
+                </div>
+            </header>
+
+            <section class="summary-grid" aria-label="Monthly totals">
+                <article class="summary-card income">
+                    <span>Earned</span>
+                    <strong id="incomeTotal">$0.00</strong>
+                </article>
+                <article class="summary-card expense">
+                    <span>Spent</span>
+                    <strong id="expenseTotal">$0.00</strong>
+                </article>
+                <article class="summary-card net">
+                    <span>Net income</span>
+                    <strong id="netTotal">$0.00</strong>
+                </article>
+            </section>
+
+            <section class="content-grid">
+                <form class="record-form" id="transactionForm">
+                    <div class="section-heading">
+                        <h2 id="formTitle">Add bill record</h2>
+                        <button class="text-button hidden" type="button" id="cancelEditButton">Cancel edit</button>
+                    </div>
+                    <input type="hidden" id="transactionId">
+                    <label>
+                        Type
+                        <select id="typeInput" required>
+                            <option value="EXPENSE">Expense</option>
+                            <option value="INCOME">Income</option>
+                        </select>
+                    </label>
+                    <label>
+                        Amount
+                        <input type="number" id="amountInput" min="0.01" step="0.01" placeholder="0.00" required>
+                    </label>
+                    <label>
+                        Category
+                        <input type="text" id="categoryInput" maxlength="80" placeholder="Food, Salary, Rent" required>
+                    </label>
+                    <label>
+                        Date
+                        <input type="date" id="dateInput" required>
+                    </label>
+                    <label>
+                        Note
+                        <textarea id="noteInput" maxlength="1000" rows="3" placeholder="Optional details"></textarea>
+                    </label>
+                    <button class="primary-button" type="submit" id="saveRecordButton">Save record</button>
+                    <p class="message" id="formMessage" role="status"></p>
+                </form>
+
+                <section class="records-panel">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Bill records</h2>
+                            <p class="muted" id="recordCount">0 records</p>
+                        </div>
+                        <div class="filters">
+                            <select id="typeFilter" aria-label="Filter by type">
+                                <option value="">All</option>
+                                <option value="INCOME">Income</option>
+                                <option value="EXPENSE">Expense</option>
+                            </select>
+                            <input type="search" id="categoryFilter" placeholder="Category">
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Note</th>
+                                    <th class="actions-column">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordsBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state hidden" id="emptyState">No bill records for this month yet.</div>
+                </section>
+            </section>
+        </section>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>
